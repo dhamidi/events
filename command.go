@@ -1,6 +1,8 @@
 package events
 
 type Command interface {
-	Execute() error
+	Execute() (Event, error)
 	Aggregate() Aggregate
 }
+
+type CommandConstructor func() Command

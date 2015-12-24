@@ -1,9 +1,15 @@
 package user
 
 import (
+	"errors"
+
 	"github.com/dhamidi/events"
 	"github.com/dhamidi/events/value"
 	"golang.org/x/crypto/bcrypt"
+)
+
+var (
+	ErrUsernameTaken = errors.New("username taken")
 )
 
 type SignUp struct {
@@ -11,9 +17,9 @@ type SignUp struct {
 	Password string
 	Email    value.Email
 
-	User *User
+	User *User `json:"-"`
 
-	Crypt func(string) ([]byte, error)
+	Crypt func(string) ([]byte, error) `json:"-"`
 }
 
 func NewSignUp() *SignUp {
@@ -31,10 +37,14 @@ func cryptWithBcrypt(password string) ([]byte, error) {
 	return bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 }
 
-func (self *SignUp) Execute() (*SignedUp, error) {
+func (self *SignUp) Execute() (events.Event, error) {
 	hashedPassword, err := self.Crypt(self.Password)
 	if err != nil {
 		return nil, events.NewInternalError(err)
+	}
+
+	if self.User.SignedUp {
+		return nil, ErrUsernameTaken
 	}
 
 	return &SignedUp{

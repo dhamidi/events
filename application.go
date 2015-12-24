@@ -84,6 +84,8 @@ func (self *Application) CodecFor(contentType string) (*Codec, error) {
 	switch contentType {
 	case "application/json":
 		return JSONCodec, nil
+	case "application/x-www-form-urlencoded":
+		return FormCodec, nil
 	}
 
 	return nil, ErrNotAcceptable

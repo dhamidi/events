@@ -74,5 +74,6 @@ func (self *SignedUp) Apply(to events.Aggregate) error {
 		return nil
 	}
 	user.SignedUp = true
+	user.PasswordHash = self.PasswordHash
 	return nil
 }

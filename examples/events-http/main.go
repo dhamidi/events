@@ -16,7 +16,12 @@ func main() {
 	makeSignUpCommand := func() events.Command {
 		return user.NewSignUp()
 	}
+	makeLogInCommand := func() events.Command {
+		return &user.LogIn{}
+	}
+
 	app.RegisterCommand("/users/sign-up", makeSignUpCommand)
+	app.RegisterCommand("/users/log-in", makeLogInCommand)
 	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		msg := NewHTTPMessage(req)
 		err := app.HandleCommand(msg)

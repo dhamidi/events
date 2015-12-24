@@ -2,11 +2,13 @@ package user
 
 const (
 	EventSignedUp = "user.signed-up"
+	EventLoggedIn = "user.logged-in"
 )
 
 type User struct {
-	Username Username
-	SignedUp bool
+	Username     Username
+	SignedUp     bool
+	PasswordHash []byte
 }
 
 func NewUser(username Username) *User {

@@ -31,9 +31,17 @@ func main() {
 	sessionStore := sessions.NewInMemory()
 	app.EventStore.Subscribe(sessionStore)
 
+	app.RegisterCommand("/posts/publish", func() events.Command { return post.NewPublish() })
 	app.RegisterCommand("/posts/draft", func() events.Command { return post.NewDraft() })
 	app.RegisterCommand("/users/sign-up", makeSignUpCommand)
 	app.RegisterCommand("/users/log-in", makeLogInCommand)
+	http.HandleFunc("/posts/publish", func(w http.ResponseWriter, req *http.Request) {
+		msg := NewHTTPMessage(w, req)
+		if !requireLogin(msg, sessionStore) {
+			return
+		}
+		app.HandleCommand(msg)
+	})
 	http.HandleFunc("/posts/draft", func(w http.ResponseWriter, req *http.Request) {
 		msg := NewHTTPMessage(w, req)
 		if !requireLogin(msg, sessionStore) {
@@ -103,6 +111,7 @@ func (self *HTTPMessage) Acknowledge(event events.Event) error {
 		http.SetCookie(self.Response, &http.Cookie{
 			Name:  "session_id",
 			Value: e.SessionId,
+			Path:  "/",
 		})
 	}
 	return nil

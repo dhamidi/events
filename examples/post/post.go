@@ -1,7 +1,9 @@
 package post
 
 type Post struct {
-	Slug Slug
+	Slug    Slug
+	Title   string
+	Content string
 }
 
 func NewPost(slug Slug) *Post {

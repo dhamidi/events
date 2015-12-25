@@ -59,6 +59,13 @@ func (self *Drafted) AggregateId() string {
 	return self.Slug
 }
 
-func (self *Drafted) Apply(events.Aggregate) error {
+func (self *Drafted) Apply(aggregate events.Aggregate) error {
+	post, ok := aggregate.(*Post)
+	if !ok {
+		return nil
+	}
+
+	post.Title = self.Title
+	post.Content = self.Content
 	return nil
 }

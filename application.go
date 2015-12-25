@@ -32,31 +32,40 @@ func (self *Application) RegisterCommand(commandName string, makeCommand Command
 
 func (self *Application) HandleCommand(message Message) error {
 	log.Printf("HandleCommand: %s", message)
+	event, err := self.runCommand(message)
+	if err != nil {
+		return message.Reject(err)
+	} else {
+		return message.Acknowledge(event)
+	}
+}
+
+func (self *Application) runCommand(message Message) (Event, error) {
 	commandName := message.RoutingKey()
 	command, err := self.NewCommand(commandName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := self.Unmarshal(message, command); err != nil {
-		return err
+		return nil, err
 	}
 
 	aggregate := command.Aggregate()
 	if err := self.EventStore.LoadHistory(aggregate); err != nil {
-		return err
+		return nil, err
 	}
-	fmt.Fprintf(os.Stderr, "DEBUG:\n%s\n", (func() []byte { data, _ := json.Marshal(aggregate); return data })())
+	fmt.Fprintf(os.Stderr, "Aggregate:\n%s\n", (func() []byte { data, _ := json.Marshal(aggregate); return data })())
 	event, err := command.Execute()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := self.EventStore.Append(event); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return event, nil
 
 }
 

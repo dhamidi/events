@@ -63,6 +63,9 @@ func decodeForm(content []byte, dest interface{}) error {
 	targetType := targetValue.Type()
 	for i := 0; i < targetType.NumField(); i++ {
 		field := targetType.Field(i)
+		if field.PkgPath != "" {
+			continue
+		}
 		value := values.Get(strings.ToLower(field.Name))
 		dest := targetValue.Field(i)
 		if dest.Kind() != reflect.Ptr {

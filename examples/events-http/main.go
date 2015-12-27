@@ -34,25 +34,23 @@ func main() {
 	app.RegisterCommand("/posts/draft", func() events.Command { return post.NewDraft() })
 	app.RegisterCommand("/users/sign-up", makeSignUpCommand)
 	app.RegisterCommand("/users/log-in", makeLogInCommand)
-	http.HandleFunc("/posts/publish", func(w http.ResponseWriter, req *http.Request) {
+
+	handleCommandWithLogin := func(w http.ResponseWriter, req *http.Request) {
 		msg := NewHTTPMessage(w, req)
 		if !requireLogin(msg, sessionStore) {
 			return
 		}
 		app.HandleCommand(msg)
-	})
-	http.HandleFunc("/posts/draft", func(w http.ResponseWriter, req *http.Request) {
-		msg := NewHTTPMessage(w, req)
-		if !requireLogin(msg, sessionStore) {
-			return
-		}
-		app.HandleCommand(msg)
-	})
-	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+	}
+	handleCommand := func(w http.ResponseWriter, req *http.Request) {
 		msg := NewHTTPMessage(w, req)
 		app.HandleCommand(msg)
 		fmt.Fprintf(os.Stderr, "DEBUG:\n%s\n", (func() []byte { data, _ := json.Marshal(sessionStore); return data })())
-	})
+	}
+
+	http.HandleFunc("/posts/publish", handleCommandWithLogin)
+	http.HandleFunc("/posts/draft", handleCommandWithLogin)
+	http.HandleFunc("/", handleCommand)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

@@ -69,11 +69,19 @@ func (self *HTTPMessage) Acknowledge(event events.Event) error {
 	return nil
 }
 
-func (self *HTTPMessage) Cookie(name string) string {
+func (self *HTTPMessage) Header(name string) string {
+	headers, ok := self.Request.Header[name]
+	if ok {
+		if len(headers) > 0 {
+			return headers[0]
+		}
+	}
+
 	cookie, err := self.Request.Cookie(name)
 	if err != nil {
 		return ""
 	}
+
 	return cookie.Value
 }
 
@@ -82,7 +90,7 @@ type SessionStore interface {
 }
 
 func requireLogin(msg events.Message, sessionStore SessionStore) bool {
-	if !sessionStore.IsLoggedIn(msg.Cookie("session_id")) {
+	if !sessionStore.IsLoggedIn(msg.Header("session_id")) {
 		msg.Reject(ErrLoginRequired)
 		return false
 	}

@@ -1,12 +1,9 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/dhamidi/events"
 	"github.com/dhamidi/events/examples/post"
@@ -35,22 +32,16 @@ func main() {
 	app.RegisterCommand("/users/sign-up", makeSignUpCommand)
 	app.RegisterCommand("/users/log-in", makeLogInCommand)
 
-	handleCommandWithLogin := func(w http.ResponseWriter, req *http.Request) {
-		msg := NewHTTPMessage(w, req)
+	transport := NewHTTPMessageBus()
+	handleCommandWithLogin := func(msg events.Message) error {
 		if !requireLogin(msg, sessionStore) {
-			return
+			return ErrLoginRequired
 		}
-		app.HandleCommand(msg)
+		return app.HandleCommand(msg)
 	}
-	handleCommand := func(w http.ResponseWriter, req *http.Request) {
-		msg := NewHTTPMessage(w, req)
-		app.HandleCommand(msg)
-		fmt.Fprintf(os.Stderr, "DEBUG:\n%s\n", (func() []byte { data, _ := json.Marshal(sessionStore); return data })())
-	}
+	events.HandleMessageFunc(transport, "/posts/draft", handleCommandWithLogin)
+	events.HandleMessageFunc(transport, "/posts/publish", handleCommandWithLogin)
+	events.HandleMessageFunc(transport, "/", app.HandleCommand)
 
-	http.HandleFunc("/posts/publish", handleCommandWithLogin)
-	http.HandleFunc("/posts/draft", handleCommandWithLogin)
-	http.HandleFunc("/", handleCommand)
-
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8080", transport))
 }

@@ -3,12 +3,12 @@ package main
 import (
 	"errors"
 	"log"
-	"net/http"
 
 	"github.com/dhamidi/events"
 	"github.com/dhamidi/events/examples/post"
 	"github.com/dhamidi/events/examples/sessions"
 	"github.com/dhamidi/events/examples/user"
+	"gopkg.in/redis.v3"
 )
 
 var (
@@ -32,7 +32,10 @@ func main() {
 	app.RegisterCommand("/users/sign-up", makeSignUpCommand)
 	app.RegisterCommand("/users/log-in", makeLogInCommand)
 
-	transport := NewHTTPMessageBus()
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+	})
+	transport := NewRedisMessageBus("commands", redisClient)
 	handleCommandWithLogin := func(msg events.Message) error {
 		if !requireLogin(msg, sessionStore) {
 			return ErrLoginRequired
@@ -43,5 +46,5 @@ func main() {
 	events.HandleMessageFunc(transport, "/posts/publish", handleCommandWithLogin)
 	events.HandleMessageFunc(transport, "/", app.HandleCommand)
 
-	log.Fatal(http.ListenAndServe(":8080", transport))
+	log.Fatal(transport.Listen())
 }

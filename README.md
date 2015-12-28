@@ -3,7 +3,7 @@
 This repository contains experiments with finding common abstractions
 in message-based applications using Event Sourcing.
 
-An example application is provided in [./examples/events-http/main.go].
+An example application is provided in [here](./examples/events-http/main.go).
 
 # Components
 
